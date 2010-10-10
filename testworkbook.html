@@ -1,0 +1,266 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>SocialCalc 0.8.1</title>
+<script type="text/javascript" src="socialcalcconstants.js"></script>
+<script type="text/javascript" src="socialcalc-3.js"></script>
+<script type="text/javascript" src="socialcalctableeditor.js"></script>
+<script type="text/javascript" src="formatnumber2.js"></script>
+<script type="text/javascript" src="formula1.js"></script>
+<script type="text/javascript" src="socialcalcpopup.js"></script>
+<script type="text/javascript" src="socialcalcspreadsheetcontrol.js"></script>
+<style>
+body, td, input, texarea {font-family:verdana,helvetica,sans-serif;font-size:small;}
+.smaller {font-size:smaller;}
+</style>
+</head>
+
+
+<body style="background-color:#FFF;" onresize="spreadsheet.DoOnResize();">
+
+<div id="fooBar" style="padding:6px;background-color:#80A9F3;">
+<input type="button" id="sheet1" name="1" value="sheet1" style="background-color:lightgreen" onclick="clickButtonFooBar('sheet1');">
+</div>
+
+<form>
+<div style="padding:6px;background-color:#80A9F3;">
+<input type="button" value="add sheet" onclick="addButtonFooBar('button')" class="smaller">
+<input type="button" value="del sheet" onclick="delButtonFooBar()" class="smaller">
+<input type="button" value="save sheet" onclick="saveButtonFooBar()" class="smaller">
+</div>
+</form>
+
+
+<div style="margin:8px 0px 10px 0px;">
+ <div id="tableeditor" style="margin:8px 0px 10px 0px;">editor goes here</div>
+</div>
+ <div id="msg" onclick="this.innerHTML='&nbsp;';"></div>
+
+
+<script>
+
+var sheetButtonArr = {};
+var sheetCnt = 1;
+var numSheets = 1;
+var currentSheetButton = document.getElementById("sheet1");;
+sheetButtonArr["sheet1"] = currentSheetButton;
+
+var sheetArr = {};
+ 
+
+
+function delButtonFooBar(){
+	if (numSheets == 1) {
+		// disallow
+		alert("cant delete only sheet!");
+		return;
+	}
+	if (currentSheetButton != null) {
+		var foo = document.getElementById("fooBar");
+		var current = document.getElementById(currentSheetButton.id);
+		
+		var name = current.id;
+		delete sheetButtonArr[name];
+		//alert("deleting"+name);
+		foo.removeChild(current);
+		currentSheetButton = null;
+		// delete the sheets
+		deleteSheet(name);
+		numSheets = numSheets-1;
+	}
+	
+	// reset current sheet
+	for (var sheet in sheetButtonArr) {
+		if (sheet != null) {
+			//alert(sheet)
+			currentSheetButton = sheetButtonArr[sheet];
+			currentSheetButton.setAttribute("style","background-color:lightgreen");
+			break;
+		}
+	}
+	if (currentSheetButton != null) {
+		alert("current = "+currentSheetButton.id)
+		activateSheet(currentSheetButton.id, null);
+	}
+}
+
+function clickButtonFooBar(name) {
+	//alert("clicked "+name);
+	var foo = document.getElementById(name);
+	foo.setAttribute("style","background-color:lightgreen");
+
+    var old = currentSheetButton.id;
+	if (currentSheetButton.id != foo.id) {
+		currentSheetButton.setAttribute("style", "");
+		
+	}
+	currentSheetButton = foo;
+
+	if (sheetArr[name] == null) {
+		//alert("need to create a new sheet-"+name);
+		//addNewSheet(name,"sheet1");
+	} else {
+		//alert("need to switch to old sheet-"+name);
+		activateSheet(name, old)
+	}
+}
+
+function addButtonFooBar(type) {
+	//Create an input type dynamically.
+	var element = document.createElement("input");
+
+	//alert(sheetCnt);
+	var name = "sheet"+ (sheetCnt+1).toString();
+
+	//Assign different attributes to the element.
+	element.setAttribute("type", type);
+	element.setAttribute("value", name);
+	element.setAttribute("id", name);
+    element.setAttribute("name", (sheetCnt+1));
+	
+	var fnname = "clickButtonFooBar("+"'"+name+"'"+")";
+	element.setAttribute("onclick",fnname);
+	
+	sheetButtonArr[name] = element;
+	sheetCnt = sheetCnt + 1;
+	
+	var old="sheet1";
+	if (currentSheetButton != null) {
+		currentSheetButton.setAttribute("style", "");
+		old = currentSheetButton.id;
+	}
+	
+	element.setAttribute("style","background-color:lightgreen");
+	currentSheetButton = element;
+	
+	var foo = document.getElementById("fooBar");
+
+	//Append the element in page (in span).
+	foo.appendChild(element);
+
+	// create the sheet
+	//alert("add new sheet")
+	addNewSheet(name,old);	
+	
+	numSheets = numSheets + 1;
+	
+}
+
+function saveButtonFooBar(){
+	var arr = []
+	for (var sheet in sheetArr) {
+		if (sheet != null) {
+			arr.push(sheetArr[sheet].sheet.CreateSheetSave());
+		}
+	}
+	alert(arr);
+}
+
+
+   // Create the spreadsheet control, but don't initialize yet
+
+   var spreadsheet = new SocialCalc.SpreadsheetControl();
+   var savestr = "";
+  // Initialize the Spreadsheet Control and display it
+
+	SocialCalc.Formula.SheetCache.sheets["sheet1"] = {sheet: spreadsheet.sheet, name: "sheet1"}; 
+
+   spreadsheet.InitializeSpreadsheetControl("tableeditor");
+   spreadsheet.ExecuteCommand('redisplay', '');
+
+	sheetArr["sheet1"] = {}
+	sheetArr["sheet1"].sheet = spreadsheet.sheet;
+	sheetArr["sheet1"].context = spreadsheet.context;
+	
+	sheetArr["sheet1"].editorprop = {};
+	sheetArr["sheet1"].editorprop.ecell = null;
+	sheetArr["sheet1"].editorprop.range = null;
+	sheetArr["sheet1"].editorprop.range2 = null;
+
+
+
+   
+function addNewSheet(sheetnamestr,oldsheetnamestr) {
+	
+	//alert("create new sheet "+sheetnamestr+" old="+oldsheetnamestr);
+	spreadsheet.sheet = new SocialCalc.Sheet();
+				
+	SocialCalc.Formula.SheetCache.sheets[sheetnamestr] = {sheet: spreadsheet.sheet, name: sheetnamestr};
+				
+	spreadsheet.sheet.sheetname = sheetnamestr;
+	spreadsheet.context = new SocialCalc.RenderContext(spreadsheet.sheet);
+
+	spreadsheet.sheet.statuscallback = SocialCalc.EditorSheetStatusCallback;
+    spreadsheet.sheet.statuscallbackparams = spreadsheet.editor;
+				
+    sheetArr[sheetnamestr] = {};
+	sheetArr[sheetnamestr].sheet = spreadsheet.sheet;
+	sheetArr[sheetnamestr].context = spreadsheet.context;
+	
+	sheetArr[sheetnamestr].editorprop = {};
+	sheetArr[sheetnamestr].editorprop.ecell = null;
+	sheetArr[sheetnamestr].editorprop.range = null;
+	sheetArr[sheetnamestr].editorprop.range2 = null;
+	
+
+	sheetArr[oldsheetnamestr].editorprop.ecell = spreadsheet.editor.ecell;
+	sheetArr[oldsheetnamestr].editorprop.range = spreadsheet.editor.range;
+	sheetArr[oldsheetnamestr].editorprop.range2 = spreadsheet.editor.range2;
+
+				
+	spreadsheet.context.showGrid = true;
+   	spreadsheet.context.showRCHeaders = true;
+	spreadsheet.editor.context = spreadsheet.context;
+
+	spreadsheet.editor.ecell = {coord: "A1", row: 1, col: 1};
+	spreadsheet.context.highlights[spreadsheet.editor.ecell.coord] = "cursor";
+	
+	spreadsheet.editor.range = {hasrange: false};
+	spreadsheet.editor.range2 = {hasrange: false};	
+
+	spreadsheet.editor.FitToEditTable();
+	spreadsheet.editor.ScheduleRender();	
+	
+}
+
+function activateSheet(sheetnamestr, oldsheetnamestr) {
+
+	
+	spreadsheet.sheet = sheetArr[sheetnamestr].sheet;
+	spreadsheet.context = sheetArr[sheetnamestr].context;
+
+	spreadsheet.editor.context = spreadsheet.context;
+
+	if (oldsheetnamestr != null) {
+		sheetArr[oldsheetnamestr].editorprop.ecell = spreadsheet.editor.ecell;
+	}
+	spreadsheet.editor.ecell = sheetArr[sheetnamestr].editorprop.ecell;
+	
+	if (oldsheetnamestr != null) {
+		sheetArr[oldsheetnamestr].editorprop.range = spreadsheet.editor.range;
+	}
+	spreadsheet.editor.range = sheetArr[sheetnamestr].editorprop.range;
+			   
+	if (oldsheetnamestr != null) {
+		sheetArr[oldsheetnamestr].editorprop.range2 = spreadsheet.editor.range2;
+	}
+	spreadsheet.editor.range2 = sheetArr[sheetnamestr].editorprop.range2;
+			   		   
+	//spreadsheet.editor.ScheduleRender();
+	spreadsheet.ExecuteCommand('recalc', '');
+}   
+
+function deleteSheet(name) {
+	delete sheetArr[name].context;
+	delete sheetArr[name].sheet;
+	delete sheetArr[name]
+	// take sheet out of the formula cache
+	delete SocialCalc.Formula.SheetCache.sheets[name]
+}
+
+
+
+</script>
+</body>
+</html>
