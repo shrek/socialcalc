@@ -13,6 +13,7 @@ playground to test multiple sheets in a page
 <script type="text/javascript" src="formula1.js"></script>
 <script type="text/javascript" src="socialcalcpopup.js"></script>
 <script type="text/javascript" src="socialcalcspreadsheetcontrol.js"></script>
+<script type="text/javascript" src="socialcalcworkbook.js"></script>
 <style>
 body, td, input, texarea {font-family:verdana,helvetica,sans-serif;font-size:small;}
 .smaller {font-size:smaller;}
@@ -49,8 +50,9 @@ var numSheets = 1;
 var currentSheetButton = document.getElementById("sheet1");;
 sheetButtonArr["sheet1"] = currentSheetButton;
 
-var sheetArr = {};
+var workbook = new SocialCalc.WorkBook();
  
+workbook.InitializeWorkBook();
 
 
 function delButtonFooBar(){
@@ -69,7 +71,7 @@ function delButtonFooBar(){
 		foo.removeChild(current);
 		currentSheetButton = null;
 		// delete the sheets
-		deleteSheet(name);
+		workbook.DeleteWorkBookSheet(name);
 		numSheets = numSheets-1;
 	}
 	
@@ -83,8 +85,8 @@ function delButtonFooBar(){
 		}
 	}
 	if (currentSheetButton != null) {
-		alert("current = "+currentSheetButton.id)
-		activateSheet(currentSheetButton.id, null);
+		//	alert("current = "+currentSheetButton.id)
+		workbook.ActivateWorkBookSheet(currentSheetButton.id, null);
 	}
 }
 
@@ -96,17 +98,11 @@ function clickButtonFooBar(name) {
     var old = currentSheetButton.id;
 	if (currentSheetButton.id != foo.id) {
 		currentSheetButton.setAttribute("style", "");
-		
 	}
+	
 	currentSheetButton = foo;
 
-	if (sheetArr[name] == null) {
-		//alert("need to create a new sheet-"+name);
-		//addNewSheet(name,"sheet1");
-	} else {
-		//alert("need to switch to old sheet-"+name);
-		activateSheet(name, old)
-	}
+	workbook.ActivateWorkBookSheet(name, old);
 }
 
 function addButtonFooBar(type) {
@@ -144,124 +140,16 @@ function addButtonFooBar(type) {
 
 	// create the sheet
 	//alert("add new sheet")
-	addNewSheet(name,old);	
+
+	workbook.AddNewWorkBookSheet(name, old);	
 	
 	numSheets = numSheets + 1;
 	
 }
 
 function saveButtonFooBar(){
-	var arr = []
-	for (var sheet in sheetArr) {
-		if (sheet != null) {
-			arr.push(sheetArr[sheet].sheet.CreateSheetSave());
-		}
-	}
-	alert(arr);
+	workbook.CreateSaveWorkBook();
 }
-
-
-   // Create the spreadsheet control, but don't initialize yet
-
-   var spreadsheet = new SocialCalc.SpreadsheetControl();
-   var savestr = "";
-  // Initialize the Spreadsheet Control and display it
-
-	SocialCalc.Formula.SheetCache.sheets["sheet1"] = {sheet: spreadsheet.sheet, name: "sheet1"}; 
-
-   spreadsheet.InitializeSpreadsheetControl("tableeditor");
-   spreadsheet.ExecuteCommand('redisplay', '');
-
-	sheetArr["sheet1"] = {}
-	sheetArr["sheet1"].sheet = spreadsheet.sheet;
-	sheetArr["sheet1"].context = spreadsheet.context;
-	
-	sheetArr["sheet1"].editorprop = {};
-	sheetArr["sheet1"].editorprop.ecell = null;
-	sheetArr["sheet1"].editorprop.range = null;
-	sheetArr["sheet1"].editorprop.range2 = null;
-
-
-
-   
-function addNewSheet(sheetnamestr,oldsheetnamestr) {
-	
-	//alert("create new sheet "+sheetnamestr+" old="+oldsheetnamestr);
-	spreadsheet.sheet = new SocialCalc.Sheet();
-				
-	SocialCalc.Formula.SheetCache.sheets[sheetnamestr] = {sheet: spreadsheet.sheet, name: sheetnamestr};
-				
-	spreadsheet.sheet.sheetname = sheetnamestr;
-	spreadsheet.context = new SocialCalc.RenderContext(spreadsheet.sheet);
-
-	spreadsheet.sheet.statuscallback = SocialCalc.EditorSheetStatusCallback;
-    spreadsheet.sheet.statuscallbackparams = spreadsheet.editor;
-				
-    sheetArr[sheetnamestr] = {};
-	sheetArr[sheetnamestr].sheet = spreadsheet.sheet;
-	sheetArr[sheetnamestr].context = spreadsheet.context;
-	
-	sheetArr[sheetnamestr].editorprop = {};
-	sheetArr[sheetnamestr].editorprop.ecell = null;
-	sheetArr[sheetnamestr].editorprop.range = null;
-	sheetArr[sheetnamestr].editorprop.range2 = null;
-	
-
-	sheetArr[oldsheetnamestr].editorprop.ecell = spreadsheet.editor.ecell;
-	sheetArr[oldsheetnamestr].editorprop.range = spreadsheet.editor.range;
-	sheetArr[oldsheetnamestr].editorprop.range2 = spreadsheet.editor.range2;
-
-				
-	spreadsheet.context.showGrid = true;
-   	spreadsheet.context.showRCHeaders = true;
-	spreadsheet.editor.context = spreadsheet.context;
-
-	spreadsheet.editor.ecell = {coord: "A1", row: 1, col: 1};
-	spreadsheet.context.highlights[spreadsheet.editor.ecell.coord] = "cursor";
-	
-	spreadsheet.editor.range = {hasrange: false};
-	spreadsheet.editor.range2 = {hasrange: false};	
-
-	spreadsheet.editor.FitToEditTable();
-	spreadsheet.editor.ScheduleRender();	
-	
-}
-
-function activateSheet(sheetnamestr, oldsheetnamestr) {
-
-	
-	spreadsheet.sheet = sheetArr[sheetnamestr].sheet;
-	spreadsheet.context = sheetArr[sheetnamestr].context;
-
-	spreadsheet.editor.context = spreadsheet.context;
-
-	if (oldsheetnamestr != null) {
-		sheetArr[oldsheetnamestr].editorprop.ecell = spreadsheet.editor.ecell;
-	}
-	spreadsheet.editor.ecell = sheetArr[sheetnamestr].editorprop.ecell;
-	
-	if (oldsheetnamestr != null) {
-		sheetArr[oldsheetnamestr].editorprop.range = spreadsheet.editor.range;
-	}
-	spreadsheet.editor.range = sheetArr[sheetnamestr].editorprop.range;
-			   
-	if (oldsheetnamestr != null) {
-		sheetArr[oldsheetnamestr].editorprop.range2 = spreadsheet.editor.range2;
-	}
-	spreadsheet.editor.range2 = sheetArr[sheetnamestr].editorprop.range2;
-			   		   
-	//spreadsheet.editor.ScheduleRender();
-	spreadsheet.ExecuteCommand('recalc', '');
-}   
-
-function deleteSheet(name) {
-	delete sheetArr[name].context;
-	delete sheetArr[name].sheet;
-	delete sheetArr[name]
-	// take sheet out of the formula cache
-	delete SocialCalc.Formula.SheetCache.sheets[name]
-}
-
 
 
 </script>
