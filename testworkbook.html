@@ -50,10 +50,11 @@ var numSheets = 1;
 var currentSheetButton = document.getElementById("sheet1");;
 sheetButtonArr["sheet1"] = currentSheetButton;
 
-var workbook = new SocialCalc.WorkBook();
- 
+var spreadsheet = new SocialCalc.SpreadsheetControl();
+var workbook = new SocialCalc.WorkBook(spreadsheet);
 workbook.InitializeWorkBook();
-
+spreadsheet.InitializeSpreadsheetControl("tableeditor");
+spreadsheet.ExecuteCommand('redisplay', '');
 
 function delButtonFooBar(){
 	if (numSheets == 1) {

@@ -16,16 +16,16 @@ if (!SocialCalc) {
 
 // Constructor:
 
-SocialCalc.WorkBook = function() {
-	this.spreadsheet = null;
+SocialCalc.WorkBook = function(spread) {
+	this.spreadsheet = spread; // this is the spreadsheet control
    	this.defaultsheetname = null;
 	this.sheetArr = {};  // misnomer, this is not really an array
 }
 
 // Methods
 
-SocialCalc.WorkBook.prototype.InitializeWorkBook = function() {
-	return SocialCalc.InitializeWorkBook(this);
+SocialCalc.WorkBook.prototype.InitializeWorkBook = function(spreadsheet) {
+	return SocialCalc.InitializeWorkBook(this, spreadsheet);
 }
 SocialCalc.WorkBook.prototype.AddNewWorkBookSheet = function(sheetname,oldsheetname) {return SocialCalc.AddNewWorkBookSheet(this, sheetname,oldsheetname);};
 SocialCalc.WorkBook.prototype.ActivateWorkBookSheet = function(sheetname,oldsheetname) {return SocialCalc.ActivateWorkBookSheet(this,sheetname,oldsheetname);};
@@ -36,8 +36,7 @@ SocialCalc.WorkBook.prototype.RenameWorkBookSheet = function(oldname, newname) {
 
 
 SocialCalc.InitializeWorkBook = function InitializeWorkBook(workbook) {
-	
-	workbook.spreadsheet = new SocialCalc.SpreadsheetControl();
+
    	workbook.defaultsheetname = "sheet1";
 	
 	var spreadsheet = workbook.spreadsheet;
@@ -46,9 +45,6 @@ SocialCalc.InitializeWorkBook = function InitializeWorkBook(workbook) {
     // Initialize the Spreadsheet Control and display it
 
 	SocialCalc.Formula.SheetCache.sheets[defaultsheetname] = {sheet: spreadsheet.sheet, name: defaultsheetname}; 
-
-   	spreadsheet.InitializeSpreadsheetControl("tableeditor");
-   	spreadsheet.ExecuteCommand('redisplay', '');
 
    	workbook.sheetArr[defaultsheetname] = {};
    	workbook.sheetArr[defaultsheetname].sheet = spreadsheet.sheet;
