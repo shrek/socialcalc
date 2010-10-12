@@ -14,6 +14,7 @@ playground to test multiple sheets in a page
 <script type="text/javascript" src="socialcalcpopup.js"></script>
 <script type="text/javascript" src="socialcalcspreadsheetcontrol.js"></script>
 <script type="text/javascript" src="socialcalcworkbook.js"></script>
+<script type="text/javascript" src="socialcalcworkbookcontrol.js"></script>
 <style>
 body, td, input, texarea {font-family:verdana,helvetica,sans-serif;font-size:small;}
 .smaller {font-size:smaller;}
@@ -23,18 +24,8 @@ body, td, input, texarea {font-family:verdana,helvetica,sans-serif;font-size:sma
 
 <body style="background-color:#FFF;" onresize="spreadsheet.DoOnResize();">
 
-<div id="fooBar" style="padding:6px;background-color:#80A9F3;">
-<input type="button" id="sheet1" name="1" value="sheet1" style="background-color:lightgreen" onclick="clickButtonFooBar('sheet1');">
+<div id="workbookControl" style="padding:6px;background-color:#80A9F3;">
 </div>
-
-<form>
-<div style="padding:6px;background-color:#80A9F3;">
-<input type="button" value="add sheet" onclick="addButtonFooBar('button')" class="smaller">
-<input type="button" value="del sheet" onclick="delButtonFooBar()" class="smaller">
-<input type="button" value="save workbook" onclick="saveButtonFooBar()" class="smaller">
-</div>
-</form>
-
 
 <div style="margin:8px 0px 10px 0px;">
  <div id="tableeditor" style="margin:8px 0px 10px 0px;">editor goes here</div>
@@ -44,114 +35,19 @@ body, td, input, texarea {font-family:verdana,helvetica,sans-serif;font-size:sma
 
 <script>
 
-var sheetButtonArr = {};
-var sheetCnt = 1;
-var numSheets = 1;
-var currentSheetButton = document.getElementById("sheet1");;
-sheetButtonArr["sheet1"] = currentSheetButton;
-
 var spreadsheet = new SocialCalc.SpreadsheetControl();
+
 var workbook = new SocialCalc.WorkBook(spreadsheet);
-workbook.InitializeWorkBook();
+workbook.InitializeWorkBook("sheet1");
+
 spreadsheet.InitializeSpreadsheetControl("tableeditor");
 spreadsheet.ExecuteCommand('redisplay', '');
 
-function delButtonFooBar(){
-	if (numSheets == 1) {
-		// disallow
-		alert("cant delete only sheet!");
-		return;
-	}
-	if (currentSheetButton != null) {
-		var foo = document.getElementById("fooBar");
-		var current = document.getElementById(currentSheetButton.id);
-		
-		var name = current.id;
-		delete sheetButtonArr[name];
-		//alert("deleting"+name);
-		foo.removeChild(current);
-		currentSheetButton = null;
-		// delete the sheets
-		workbook.DeleteWorkBookSheet(name);
-		numSheets = numSheets-1;
-	}
-	
-	// reset current sheet
-	for (var sheet in sheetButtonArr) {
-		if (sheet != null) {
-			//alert(sheet)
-			currentSheetButton = sheetButtonArr[sheet];
-			currentSheetButton.setAttribute("style","background-color:lightgreen");
-			break;
-		}
-	}
-	if (currentSheetButton != null) {
-		//	alert("current = "+currentSheetButton.id)
-		workbook.ActivateWorkBookSheet(currentSheetButton.id, null);
-	}
-}
 
-function clickButtonFooBar(name) {
-	//alert("clicked "+name);
-	var foo = document.getElementById(name);
-	foo.setAttribute("style","background-color:lightgreen");
+var workbookcontrol = new SocialCalc.WorkBookControl(workbook,"workbookControl","sheet1");
+workbookcontrol.InitializeWorkBookControl();
 
-    var old = currentSheetButton.id;
-	if (currentSheetButton.id != foo.id) {
-		currentSheetButton.setAttribute("style", "");
-	}
-	
-	currentSheetButton = foo;
-
-	workbook.ActivateWorkBookSheet(name, old);
-}
-
-function addButtonFooBar(type) {
-	//Create an input type dynamically.
-	var element = document.createElement("input");
-
-	//alert(sheetCnt);
-	var name = "sheet"+ (sheetCnt+1).toString();
-
-	//Assign different attributes to the element.
-	element.setAttribute("type", type);
-	element.setAttribute("value", name);
-	element.setAttribute("id", name);
-    element.setAttribute("name", (sheetCnt+1));
-	
-	var fnname = "clickButtonFooBar("+"'"+name+"'"+")";
-	element.setAttribute("onclick",fnname);
-	
-	sheetButtonArr[name] = element;
-	sheetCnt = sheetCnt + 1;
-	
-	var old="sheet1";
-	if (currentSheetButton != null) {
-		currentSheetButton.setAttribute("style", "");
-		old = currentSheetButton.id;
-	}
-	
-	element.setAttribute("style","background-color:lightgreen");
-	currentSheetButton = element;
-	
-	var foo = document.getElementById("fooBar");
-
-	//Append the element in page (in span).
-	foo.appendChild(element);
-
-	// create the sheet
-	//alert("add new sheet")
-
-	workbook.AddNewWorkBookSheet(name, old);	
-	
-	numSheets = numSheets + 1;
-	
-}
-
-function saveButtonFooBar(){
-	workbook.CreateSaveWorkBook();
-}
-
+spreadsheet.DoOnResize()
 
 </script>
 </body>

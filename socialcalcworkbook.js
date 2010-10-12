@@ -24,8 +24,8 @@ SocialCalc.WorkBook = function(spread) {
 
 // Methods
 
-SocialCalc.WorkBook.prototype.InitializeWorkBook = function(spreadsheet) {
-	return SocialCalc.InitializeWorkBook(this, spreadsheet);
+SocialCalc.WorkBook.prototype.InitializeWorkBook = function(defaultsheet) {
+	return SocialCalc.InitializeWorkBook(this, defaultsheet);
 }
 SocialCalc.WorkBook.prototype.AddNewWorkBookSheet = function(sheetname,oldsheetname) {return SocialCalc.AddNewWorkBookSheet(this, sheetname,oldsheetname);};
 SocialCalc.WorkBook.prototype.ActivateWorkBookSheet = function(sheetname,oldsheetname) {return SocialCalc.ActivateWorkBookSheet(this,sheetname,oldsheetname);};
@@ -35,9 +35,9 @@ SocialCalc.WorkBook.prototype.LoadWorkBook = function(savestr) {return SocialCal
 SocialCalc.WorkBook.prototype.RenameWorkBookSheet = function(oldname, newname) {return SocialCalc.RenameWorkBookSheet(this, oldname, newname);};
 
 
-SocialCalc.InitializeWorkBook = function InitializeWorkBook(workbook) {
+SocialCalc.InitializeWorkBook = function InitializeWorkBook(workbook, defaultsheet) {
 
-   	workbook.defaultsheetname = "sheet1";
+   	workbook.defaultsheetname = defaultsheet;
 	
 	var spreadsheet = workbook.spreadsheet;
 	var defaultsheetname = workbook.defaultsheetname;
