@@ -77,12 +77,13 @@ SocialCalc.WorkBookControlDelSheet = function() {
 		var current = document.getElementById(control.currentSheetButton.id);
 		
 		var name = current.id;
+		var curname = control.currentSheetButton.value;
 		delete control.sheetButtonArr[name];
 		
 		foo.removeChild(current);
 		control.currentSheetButton = null;
 		// delete the sheets
-		control.workbook.DeleteWorkBookSheet(name);
+		control.workbook.DeleteWorkBookSheet(name, curname);
 		control.numSheets = control.numSheets-1;
 	}
 	
@@ -181,7 +182,7 @@ SocialCalc.WorkBookControlRenameSheet = function(){
 	var	element = document.getElementById(control.renameDialogId);
    if (element) return;
    
-   var currentsheet = control.currentSheetButton.id;
+   var currentsheet = control.currentSheetButton.value;
    var str = '<div style="padding:6px 0px 4px 6px;">'+
          '<span style="font-size:smaller;">'+'Rename-'+ currentsheet + '</span><br>'+
          '<input type="text" id="newSheetName" style="width:380px;" value="'+'"><br>'+'</div>';
@@ -218,7 +219,7 @@ SocialCalc.WorkBookControlRenameSheet = function(){
 
    control.workbook.spreadsheet.spreadsheetDiv.appendChild(main);
 
-   ele = document.getElementById("newSheetName");
+   var ele = document.getElementById("newSheetName");
    ele.focus();
    SocialCalc.CmdGotFocus(ele);
    
@@ -247,6 +248,27 @@ SocialCalc.WorkBookControlRenameSheetSubmit = function(){
    var ele = document.getElementById("newSheetName");
    //alert(ele.value);
    var control = SocialCalc.GetCurrentWorkBookControl();
-   control.currentSheetButton.value = ele.value;
+   if (ele.value.length == 0) {
+   	ele.focus();
+   	return;
+   }
+   var oldname = control.currentSheetButton.value;
+   var newname = ele.value;
+   
+
    SocialCalc.WorkBookControlRenameSheetHide();
+   // verify newname does not clash with any existing sheet name
+   // if so reject
+   for (var sheet in control.sheetButtonArr) {
+		if (control.sheetButtonArr[sheet].value == newname) {
+			alert(newname+" already exists");
+			return;
+		}
+   }
+   
+   control.currentSheetButton.value = newname;
+   
+   // perform a rename for formula references to this sheet in all the 
+   // sheets in the workbook
+   control.workbook.RenameWorkBookSheet(oldname, ele.value);
 }

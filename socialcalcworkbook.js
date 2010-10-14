@@ -29,7 +29,7 @@ SocialCalc.WorkBook.prototype.InitializeWorkBook = function(defaultsheet) {
 }
 SocialCalc.WorkBook.prototype.AddNewWorkBookSheet = function(sheetname,oldsheetname) {return SocialCalc.AddNewWorkBookSheet(this, sheetname,oldsheetname);};
 SocialCalc.WorkBook.prototype.ActivateWorkBookSheet = function(sheetname,oldsheetname) {return SocialCalc.ActivateWorkBookSheet(this,sheetname,oldsheetname);};
-SocialCalc.WorkBook.prototype.DeleteWorkBookSheet = function(sheetname,oldsheetname) {return SocialCalc.DeleteWorkBookSheet(this,sheetname,oldsheetname);};
+SocialCalc.WorkBook.prototype.DeleteWorkBookSheet = function(sheetname,cursheetname) {return SocialCalc.DeleteWorkBookSheet(this,sheetname,cursheetname);};
 SocialCalc.WorkBook.prototype.CreateSaveWorkBook = function() {return SocialCalc.CreateSaveWorkBook(this);};
 SocialCalc.WorkBook.prototype.LoadWorkBook = function(savestr) {return SocialCalc.LoadWorkBook(this, savestr);};
 SocialCalc.WorkBook.prototype.RenameWorkBookSheet = function(oldname, newname) {return SocialCalc.RenameWorkBookSheet(this, oldname, newname);};
@@ -133,15 +133,15 @@ SocialCalc.ActivateWorkBookSheet = function ActivateWorkBookSheet(workbook, shee
 	spreadsheet.ExecuteCommand('recalc', '');
 }   
 
-SocialCalc.DeleteWorkBookSheet = function DeleteWorkBookSheet(workbook, name) {
+SocialCalc.DeleteWorkBookSheet = function DeleteWorkBookSheet(workbook, oldname, curname) {
 	
 	//alert("delete "+name);
 	
-	delete workbook.sheetArr[name].context;
-	delete workbook.sheetArr[name].sheet;
-	delete workbook.sheetArr[name];
+	delete workbook.sheetArr[oldname].context;
+	delete workbook.sheetArr[oldname].sheet;
+	delete workbook.sheetArr[oldname];
 	// take sheet out of the formula cache
-	delete SocialCalc.Formula.SheetCache.sheets[name]
+	delete SocialCalc.Formula.SheetCache.sheets[curname];
 }
 
 // create a serialization of the savestr+editor settings+audit of all sheets,
@@ -162,6 +162,66 @@ SocialCalc.LoadWorkBook = function LoadWorkBook(workbook, savestr) {
 	alert("not implemented yet");
 }
 
+SocialCalc.RenameWorkBookSheetCell = function(formula, oldname, newname) {
+ 	var ttype, ttext, i, newcr;
+   	var updatedformula = "";
+   	var sheetref = false;
+   	var scf = SocialCalc.Formula;
+   	if (!scf) {
+   		return "Need SocialCalc.Formula";
+    }
+   	var tokentype = scf.TokenType;
+   	var token_op = tokentype.op;
+   	var token_string = tokentype.string;
+   	var token_coord = tokentype.coord;
+   	var tokenOpExpansion = scf.TokenOpExpansion;
+
+   	var parseinfo = SocialCalc.Formula.ParseFormulaIntoTokens(formula);
+
+   	for (i = 0; i < parseinfo.length; i++) {
+   		ttype = parseinfo[i].type;
+   		ttext = parseinfo[i].text;
+		//alert(ttype+","+ttext);
+		if ((ttype == tokentype.name) && (scf.NormalizeSheetName(ttext) == oldname) && (i < parseinfo.length)) {
+   			if ((parseinfo[i + 1].type == token_op) && (parseinfo[i + 1].text == "!")) {
+				updatedformula += newname;
+			} else {
+				updatedformula += ttext;
+			}
+	  	} else {
+			updatedformula += ttext;
+		}
+   	}
+	//alert(updatedformula);
+	return updatedformula;
+}
+
 SocialCalc.RenameWorkBookSheet = function RenameWorkBookSheet(workbook, oldname, newname) {
-	alert("not implemented yet");
+
+	// for each sheet, fix up all the formula references
+	//
+	var oldsheet = SocialCalc.Formula.SheetCache.sheets[oldname].sheet;
+	delete SocialCalc.Formula.SheetCache.sheets[oldname];
+	SocialCalc.Formula.SheetCache.sheets[newname] = {sheet: oldsheet, name: newname};
+	//
+	// fix up formulas for sheet rename
+	// if formulas should not be fixed up upon sheet rename, then comment out the following
+	// block
+	//
+	for (var sheet in workbook.sheetArr) {
+		//alert("found sheet-"+sheet)
+		for (var cr in workbook.sheetArr[sheet].sheet.cells) { // update cell references to sheet name
+			//alert(cr);
+			var cell = workbook.sheetArr[sheet].sheet.cells[cr];
+			//if (cell) alert(cell.datatype)
+			if (cell && cell.datatype == "f") {
+				cell.formula = SocialCalc.RenameWorkBookSheetCell(cell.formula, oldname, newname);
+				if (cell.parseinfo) {
+					delete cell.parseinfo;
+				}
+			}
+		}
+	}
+	// recalculate
+	workbook.spreadsheet.ExecuteCommand('recalc', '');
 }
