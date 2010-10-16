@@ -20,6 +20,7 @@ SocialCalc.WorkBook = function(spread) {
 	this.spreadsheet = spread; // this is the spreadsheet control
    	this.defaultsheetname = null;
 	this.sheetArr = {};  // misnomer, this is not really an array
+	this.clipsheet = {}; // for copy paste of sheets
 }
 
 // Methods
@@ -27,13 +28,14 @@ SocialCalc.WorkBook = function(spread) {
 SocialCalc.WorkBook.prototype.InitializeWorkBook = function(defaultsheet) {
 	return SocialCalc.InitializeWorkBook(this, defaultsheet);
 }
-SocialCalc.WorkBook.prototype.AddNewWorkBookSheet = function(sheetname,oldsheetname) {return SocialCalc.AddNewWorkBookSheet(this, sheetname,oldsheetname);};
+SocialCalc.WorkBook.prototype.AddNewWorkBookSheet = function(sheetname,oldsheetname, fromclip) {return SocialCalc.AddNewWorkBookSheet(this, sheetname,oldsheetname, fromclip);};
 SocialCalc.WorkBook.prototype.ActivateWorkBookSheet = function(sheetname,oldsheetname) {return SocialCalc.ActivateWorkBookSheet(this,sheetname,oldsheetname);};
 SocialCalc.WorkBook.prototype.DeleteWorkBookSheet = function(sheetname,cursheetname) {return SocialCalc.DeleteWorkBookSheet(this,sheetname,cursheetname);};
 SocialCalc.WorkBook.prototype.CreateSaveWorkBook = function() {return SocialCalc.CreateSaveWorkBook(this);};
 SocialCalc.WorkBook.prototype.LoadWorkBook = function(savestr) {return SocialCalc.LoadWorkBook(this, savestr);};
 SocialCalc.WorkBook.prototype.RenameWorkBookSheet = function(oldname, newname) {return SocialCalc.RenameWorkBookSheet(this, oldname, newname);};
-
+SocialCalc.WorkBook.prototype.CopyWorkBookSheet = function(sheetid) {return SocialCalc.CopyWorkBookSheet(this, sheetid);};
+SocialCalc.WorkBook.prototype.PasteWorkBookSheet = function(newid, oldid) {return SocialCalc.PasteWorkBookSheet(this, newid, oldid);};
 
 SocialCalc.InitializeWorkBook = function InitializeWorkBook(workbook, defaultsheet) {
 
@@ -55,10 +57,14 @@ SocialCalc.InitializeWorkBook = function InitializeWorkBook(workbook, defaultshe
    	workbook.sheetArr[defaultsheetname].editorprop.ecell = null;
    	workbook.sheetArr[defaultsheetname].editorprop.range = null;
    	workbook.sheetArr[defaultsheetname].editorprop.range2 = null;
+	
+	workbook.clipsheet.savestr = null;
+	workbook.clipsheet.copiedfrom = null;
+	workbook.clipsheet.editorprop = {};
 }
 
 
-SocialCalc.AddNewWorkBookSheet = function AddNewWorkBookSheet(workbook, sheetnamestr,oldsheetnamestr) {
+SocialCalc.AddNewWorkBookSheet = function AddNewWorkBookSheet(workbook, sheetnamestr,oldsheetnamestr, fromclip) {
 	
 	var spreadsheet = workbook.spreadsheet;
 	
@@ -83,24 +89,54 @@ SocialCalc.AddNewWorkBookSheet = function AddNewWorkBookSheet(workbook, sheetnam
 	workbook.sheetArr[sheetnamestr].editorprop.range = null;
 	workbook.sheetArr[sheetnamestr].editorprop.range2 = null;
 
-	workbook.sheetArr[oldsheetnamestr].editorprop.ecell = spreadsheet.editor.ecell;
-	workbook.sheetArr[oldsheetnamestr].editorprop.range = spreadsheet.editor.range;
-	workbook.sheetArr[oldsheetnamestr].editorprop.range2 = spreadsheet.editor.range2;
+	if (oldsheetnamestr != null) {
+		workbook.sheetArr[oldsheetnamestr].editorprop.ecell = spreadsheet.editor.ecell;
+		workbook.sheetArr[oldsheetnamestr].editorprop.range = spreadsheet.editor.range;
+		workbook.sheetArr[oldsheetnamestr].editorprop.range2 = spreadsheet.editor.range2;
+	}
 
 				
 	spreadsheet.context.showGrid = true;
    	spreadsheet.context.showRCHeaders = true;
 	spreadsheet.editor.context = spreadsheet.context;
 
-	spreadsheet.editor.ecell = {coord: "A1", row: 1, col: 1};
+	if (!fromclip) {
+		spreadsheet.editor.ecell = {
+			coord: "A1",
+			row: 1,
+			col: 1
+		};
+		
+		spreadsheet.editor.range = {
+			hasrange: false
+		};
+		spreadsheet.editor.range2 = {
+			hasrange: false
+		};
+	}
+	
+	// set highlights
 	spreadsheet.context.highlights[spreadsheet.editor.ecell.coord] = "cursor";
 	
-	spreadsheet.editor.range = {hasrange: false};
-	spreadsheet.editor.range2 = {hasrange: false};	
-
+	if (fromclip) {
+		// this is the result of a paste sheet
+		//alert("from clip");
+		
+		if (workbook.clipsheet.savestr != null) {
+			//alert("sheetdata = "+workbook.clipsheet.savestr);
+			spreadsheet.sheet.ParseSheetSave(workbook.clipsheet.savestr);
+		}
+				
+		spreadsheet.editor.ecell = workbook.clipsheet.editorprop.ecell;
+		spreadsheet.context.highlights[spreadsheet.editor.ecell.coord] = "cursor";
+	
+		// range is not pasted ??!??
+	
+	}
+	
 	spreadsheet.editor.FitToEditTable();
 	spreadsheet.editor.ScheduleRender();	
-	
+	//spreadsheet.ExecuteCommand('recalc', '');
 }
 
 SocialCalc.ActivateWorkBookSheet = function ActivateWorkBookSheet(workbook, sheetnamestr, oldsheetnamestr) {
@@ -128,7 +164,9 @@ SocialCalc.ActivateWorkBookSheet = function ActivateWorkBookSheet(workbook, shee
 		workbook.sheetArr[oldsheetnamestr].editorprop.range2 = spreadsheet.editor.range2;
 	}
 	spreadsheet.editor.range2 = workbook.sheetArr[sheetnamestr].editorprop.range2;
-			   		   
+			   	
+	// reset highlights ??
+					   
 	//spreadsheet.editor.ScheduleRender();
 	spreadsheet.ExecuteCommand('recalc', '');
 }   
@@ -224,4 +262,28 @@ SocialCalc.RenameWorkBookSheet = function RenameWorkBookSheet(workbook, oldname,
 	}
 	// recalculate
 	workbook.spreadsheet.ExecuteCommand('recalc', '');
+}
+
+SocialCalc.CopyWorkBookSheet = function CopyWorkBookSheet(workbook, sheetid) {
+
+	//alert("in copy "+sheetid);
+    workbook.clipsheet.savestr = workbook.sheetArr[sheetid].sheet.CreateSheetSave();
+	//alert("in copy save="+workbook.clipsheet.savestr);
+    workbook.clipsheet.copiedfrom = sheetid;
+    workbook.clipsheet.editorprop = {};
+    workbook.clipsheet.editorprop.ecell = workbook.spreadsheet.editor.ecell;
+    //workbook.clipsheet.editorprop.range = workbook.spreadsheet.editor.range;
+	//workbook.clipsheet.editorprop.range2 = workbook.spreadsheet.editor.range2;
+	//workbook.clipsheet.highlights = workbook.spreadsheet.context.highlights;
+	
+	alert("copied "+sheetid);
+}
+
+SocialCalc.PasteWorkBookSheet = function PasteWorkBookSheet(workbook, newsheetid, oldsheetid) {
+	
+	//alert(newsheetid+oldsheetid);
+	workbook.AddNewWorkBookSheet(newsheetid, oldsheetid, true);
+	
+	// clear the clip ?
+	
 }

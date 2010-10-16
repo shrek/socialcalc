@@ -37,6 +37,9 @@ SocialCalc.WorkBookControl = function(book, divid, defaultsheetname) {
 '<input type="button" value="delete sheet" onclick="SocialCalc.WorkBookControlDelSheet()" class="smaller">'+
 '<input type="button" value="rename sheet" onclick="SocialCalc.WorkBookControlRenameSheet()" class="smaller">'+
 '<input type="button" value="save workbook" onclick="SocialCalc.WorkBookControlSaveSheet()" class="smaller">'+
+'<input type="button" value="load workbook" onclick="SocialCalc.WorkBookControlLoadSheet()" class="smaller">'+
+'<input type="button" value="copy sheet" onclick="SocialCalc.WorkBookControlCopySheet()" class="smaller">'+
+'<input type="button" value="paste sheet" onclick="SocialCalc.WorkBookControlPasteSheet()" class="smaller">'+
 '</div>'+
 '</form>';
 
@@ -140,7 +143,7 @@ SocialCalc.WorkBookControlAddSheet = function(addworksheet){
 	// create the sheet
 
 	if (addworksheet) {
-		control.workbook.AddNewWorkBookSheet(name, old);
+		control.workbook.AddNewWorkBookSheet(name, old, false);
 	}	
 	
 	control.numSheets = control.numSheets + 1;
@@ -272,3 +275,40 @@ SocialCalc.WorkBookControlRenameSheetSubmit = function(){
    // sheets in the workbook
    control.workbook.RenameWorkBookSheet(oldname, ele.value);
 }
+
+SocialCalc.WorkBookControlLoadSheet = function(){
+
+	var control = SocialCalc.GetCurrentWorkBookControl();
+	
+	control.workbook.LoadWorkBook();
+	
+}
+
+SocialCalc.WorkBookControlCopySheet = function(){
+
+	//alert("in copy");
+
+	var control = SocialCalc.GetCurrentWorkBookControl();
+	
+	control.workbook.CopyWorkBookSheet(control.currentSheetButton.id);
+	
+}
+
+SocialCalc.WorkBookControlPasteSheet = function() {
+
+	//alert("in paste");
+
+	var control = SocialCalc.GetCurrentWorkBookControl();
+	
+	var oldid = control.currentSheetButton.id;
+	
+	SocialCalc.WorkBookControlAddSheet(false);
+	
+	var newid = control.currentSheetButton.id;
+	
+	//alert(newid+oldid);
+	
+	control.workbook.PasteWorkBookSheet(newid, oldid);
+	
+}
+
