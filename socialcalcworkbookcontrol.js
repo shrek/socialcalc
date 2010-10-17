@@ -15,6 +15,8 @@ if (!SocialCalc) {
 
 SocialCalc.CurrentWorkbookControlObject = null; 
 
+SocialCalc.TestWorkBookSaveStr = ""
+
 // Constructor:
 
 SocialCalc.WorkBookControl = function(book, divid, defaultsheetname) {
@@ -37,7 +39,8 @@ SocialCalc.WorkBookControl = function(book, divid, defaultsheetname) {
 '<input type="button" value="delete sheet" onclick="SocialCalc.WorkBookControlDelSheet()" class="smaller">'+
 '<input type="button" value="rename sheet" onclick="SocialCalc.WorkBookControlRenameSheet()" class="smaller">'+
 '<input type="button" value="save workbook" onclick="SocialCalc.WorkBookControlSaveSheet()" class="smaller">'+
-'<input type="button" value="load workbook" onclick="SocialCalc.WorkBookControlLoadSheet()" class="smaller">'+
+'<input type="button" value="new workbook" onclick="SocialCalc.WorkBookControlNewBook()" class="smaller">'+
+'<input type="button" value="load workbook" onclick="SocialCalc.WorkBookControlLoad()" class="smaller">'+
 '<input type="button" value="copy sheet" onclick="SocialCalc.WorkBookControlCopySheet()" class="smaller">'+
 '<input type="button" value="paste sheet" onclick="SocialCalc.WorkBookControlPasteSheet()" class="smaller">'+
 '</div>'+
@@ -172,9 +175,34 @@ SocialCalc.WorkBookControlSaveSheet = function(){
 
 	var control = SocialCalc.GetCurrentWorkBookControl();
 	
-	control.workbook.CreateSaveWorkBook();
+	var sheetsave = {};
+
+	sheetsave.currentid = control.currentSheetButton.id;
+	sheetsave.currentname = control.currentSheetButton.value;
+
+	sheetsave.sheetArr = {}
+	for (var sheet in control.sheetButtonArr) {
+		var sheetstr = control.workbook.SaveWorkBookSheet(sheet);
+		sheetsave.sheetArr[sheet] = sheetstr;
+	}
+	
+	SocialCalc.TestWorkBookSaveStr = JSON.stringify(sheetsave);
+	alert(SocialCalc.TestWorkBookSaveStr);
+}
+
+SocialCalc.WorkBookControlLoad = function(){
+
+
+	var sheetsave = JSON.parse(SocialCalc.TestWorkBookSaveStr);
+	alert(sheetsave.currentid+","+sheetsave.currentname)
+	
+	for (var sheet in sheetsave.sheetArr) {
+		alert(sheet+","+sheetsave.sheetArr[sheet].savestr)
+	}
+	
 	
 }
+
 
 SocialCalc.WorkBookControlRenameSheet = function(){
 
@@ -276,12 +304,41 @@ SocialCalc.WorkBookControlRenameSheetSubmit = function(){
    control.workbook.RenameWorkBookSheet(oldname, ele.value);
 }
 
-SocialCalc.WorkBookControlLoadSheet = function(){
+SocialCalc.WorkBookControlCreateNewBook = function() {
 
 	var control = SocialCalc.GetCurrentWorkBookControl();
 	
-	control.workbook.LoadWorkBook();
+	// delete all the sheets except 1
+	for (var sheet in control.sheetButtonArr) {
+		if (sheet != control.currentSheetButton.id) {
+			control.workbook.DeleteWorkBookSheet(control.sheetButtonArr[sheet].id, control.sheetButtonArr[sheet].value);
+		}
+	}
+	// Reset that 1 sheet
 	
+	control.workbook.LoadWorkBookSheet(control.currentSheetButton.id, "")
+	
+	
+	// delete all the buttons except 1
+	for (var sheet in control.sheetButtonArr) {
+		if (sheet != control.currentSheetButton.id) {
+			var foo = document.getElementById("fooBar");
+			var current = document.getElementById(control.sheetButtonArr[sheet].id);
+			
+			var name = current.id;
+			delete control.sheetButtonArr[name];
+			
+			foo.removeChild(current);
+			control.numSheets = control.numSheets - 1;
+		}
+	}
+	control.currentSheetButton.value = workbook.defaultsheetname;	
+}
+
+SocialCalc.WorkBookControlNewBook = function() {
+    var control = SocialCalc.GetCurrentWorkBookControl();
+	SocialCalc.WorkBookControlCreateNewBook();
+	control.workbook.RenderWorkBookSheet();
 }
 
 SocialCalc.WorkBookControlCopySheet = function(){

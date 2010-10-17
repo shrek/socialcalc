@@ -31,11 +31,12 @@ SocialCalc.WorkBook.prototype.InitializeWorkBook = function(defaultsheet) {
 SocialCalc.WorkBook.prototype.AddNewWorkBookSheet = function(sheetname,oldsheetname, fromclip) {return SocialCalc.AddNewWorkBookSheet(this, sheetname,oldsheetname, fromclip);};
 SocialCalc.WorkBook.prototype.ActivateWorkBookSheet = function(sheetname,oldsheetname) {return SocialCalc.ActivateWorkBookSheet(this,sheetname,oldsheetname);};
 SocialCalc.WorkBook.prototype.DeleteWorkBookSheet = function(sheetname,cursheetname) {return SocialCalc.DeleteWorkBookSheet(this,sheetname,cursheetname);};
-SocialCalc.WorkBook.prototype.CreateSaveWorkBook = function() {return SocialCalc.CreateSaveWorkBook(this);};
-SocialCalc.WorkBook.prototype.LoadWorkBook = function(savestr) {return SocialCalc.LoadWorkBook(this, savestr);};
+SocialCalc.WorkBook.prototype.SaveWorkBookSheet = function(sheetid) {return SocialCalc.SaveWorkBookSheet(this, sheetid);};
+SocialCalc.WorkBook.prototype.LoadWorkBookSheet = function(sheetid, savestr) {return SocialCalc.LoadWorkBookSheet(this, sheetid, savestr);};
 SocialCalc.WorkBook.prototype.RenameWorkBookSheet = function(oldname, newname) {return SocialCalc.RenameWorkBookSheet(this, oldname, newname);};
 SocialCalc.WorkBook.prototype.CopyWorkBookSheet = function(sheetid) {return SocialCalc.CopyWorkBookSheet(this, sheetid);};
 SocialCalc.WorkBook.prototype.PasteWorkBookSheet = function(newid, oldid) {return SocialCalc.PasteWorkBookSheet(this, newid, oldid);};
+SocialCalc.WorkBook.prototype.RenderWorkBookSheet = function() {return SocialCalc.RenderWorkBookSheet(this);};
 
 SocialCalc.InitializeWorkBook = function InitializeWorkBook(workbook, defaultsheet) {
 
@@ -173,7 +174,7 @@ SocialCalc.ActivateWorkBookSheet = function ActivateWorkBookSheet(workbook, shee
 
 SocialCalc.DeleteWorkBookSheet = function DeleteWorkBookSheet(workbook, oldname, curname) {
 	
-	//alert("delete "+name);
+	//alert("delete "+oldname+","+curname);
 	
 	delete workbook.sheetArr[oldname].context;
 	delete workbook.sheetArr[oldname].sheet;
@@ -182,22 +183,22 @@ SocialCalc.DeleteWorkBookSheet = function DeleteWorkBookSheet(workbook, oldname,
 	delete SocialCalc.Formula.SheetCache.sheets[curname];
 }
 
-// create a serialization of the savestr+editor settings+audit of all sheets,
-// and some additional metadata about which sheet is active etc
-// use JSON to serialize ?
-SocialCalc.CreateSaveWorkBook = function CreateSaveWorkBook(workbook) {
-	// this is just a start
-	var arr = []
-	for (var sheet in workbook.sheetArr) {
-		if (sheet != null) {
-			arr.push(workbook.sheetArr[sheet].sheet.CreateSheetSave());
-		}
-	}
-	alert(arr);
+
+SocialCalc.SaveWorkBookSheet = function CreateSaveWorkBook(workbook, sheetid) {
+
+	var sheetstr = {}
+	sheetstr.savestr = workbook.sheetArr[sheetid].sheet.CreateSheetSave();
+	return sheetstr;
 } 
 
-SocialCalc.LoadWorkBook = function LoadWorkBook(workbook, savestr) {
-	alert("not implemented yet");
+SocialCalc.LoadWorkBookSheet = function LoadWorkBookSheet(workbook, sheetid, savestr) {
+	
+	workbook.sheetArr[sheetid].sheet.ResetSheet();
+	workbook.sheetArr[sheetid].sheet.ParseSheetSave(savestr);
+}
+
+SocialCalc.RenderWorkBookSheet = function RenderWorkBookSheet(workbook) {
+	workbook.spreadsheet.editor.ScheduleRender();
 }
 
 SocialCalc.RenameWorkBookSheetCell = function(formula, oldname, newname) {
