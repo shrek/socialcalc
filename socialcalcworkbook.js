@@ -28,12 +28,15 @@ SocialCalc.WorkBook = function(spread) {
 SocialCalc.WorkBook.prototype.InitializeWorkBook = function(defaultsheet) {
 	return SocialCalc.InitializeWorkBook(this, defaultsheet);
 }
-SocialCalc.WorkBook.prototype.AddNewWorkBookSheet = function(sheetname,oldsheetname, fromclip) {return SocialCalc.AddNewWorkBookSheet(this, sheetname,oldsheetname, fromclip);};
+
+
+SocialCalc.WorkBook.prototype.AddNewWorkBookSheetNoSwitch = function(sheetid,sheetname, savestr) {return SocialCalc.AddNewWorkBookSheetNoSwitch(this, sheetid,sheetname,savestr);};
+SocialCalc.WorkBook.prototype.AddNewWorkBookSheet = function(sheetname,oldsheetname, fromclip, spread) {return SocialCalc.AddNewWorkBookSheet(this, sheetname,oldsheetname, fromclip, spread);};
 SocialCalc.WorkBook.prototype.ActivateWorkBookSheet = function(sheetname,oldsheetname) {return SocialCalc.ActivateWorkBookSheet(this,sheetname,oldsheetname);};
 SocialCalc.WorkBook.prototype.DeleteWorkBookSheet = function(sheetname,cursheetname) {return SocialCalc.DeleteWorkBookSheet(this,sheetname,cursheetname);};
 SocialCalc.WorkBook.prototype.SaveWorkBookSheet = function(sheetid) {return SocialCalc.SaveWorkBookSheet(this, sheetid);};
-SocialCalc.WorkBook.prototype.LoadWorkBookSheet = function(sheetid, savestr) {return SocialCalc.LoadWorkBookSheet(this, sheetid, savestr);};
-SocialCalc.WorkBook.prototype.RenameWorkBookSheet = function(oldname, newname) {return SocialCalc.RenameWorkBookSheet(this, oldname, newname);};
+SocialCalc.WorkBook.prototype.LoadRenameWorkBookSheet = function(sheetid, savestr, newname) {return SocialCalc.LoadRenameWorkBookSheet(this, sheetid, savestr, newname);};
+SocialCalc.WorkBook.prototype.RenameWorkBookSheet = function(oldname, newname, sheetid) {return SocialCalc.RenameWorkBookSheet(this, oldname, newname, sheetid);};
 SocialCalc.WorkBook.prototype.CopyWorkBookSheet = function(sheetid) {return SocialCalc.CopyWorkBookSheet(this, sheetid);};
 SocialCalc.WorkBook.prototype.PasteWorkBookSheet = function(newid, oldid) {return SocialCalc.PasteWorkBookSheet(this, newid, oldid);};
 SocialCalc.WorkBook.prototype.RenderWorkBookSheet = function() {return SocialCalc.RenderWorkBookSheet(this);};
@@ -64,43 +67,81 @@ SocialCalc.InitializeWorkBook = function InitializeWorkBook(workbook, defaultshe
 	workbook.clipsheet.editorprop = {};
 }
 
+SocialCalc.AddNewWorkBookSheetNoSwitch = function AddNewWorkBookSheetNoSwitch(workbook, sheetid, sheetname, savestr) {
 
-SocialCalc.AddNewWorkBookSheet = function AddNewWorkBookSheet(workbook, sheetnamestr,oldsheetnamestr, fromclip) {
+	//alert(sheetid+","+sheetname+","+savestr);
 	
 	var spreadsheet = workbook.spreadsheet;
 	
-	//alert("create new sheet "+sheetnamestr+" old="+oldsheetnamestr+" def="+workbook.defaultsheetname);
+	var newsheet = new SocialCalc.Sheet();
 	
-	spreadsheet.sheet = new SocialCalc.Sheet();
-				
-	SocialCalc.Formula.SheetCache.sheets[sheetnamestr] = {sheet: spreadsheet.sheet, name: sheetnamestr};
-				
-	spreadsheet.sheet.sheetname = sheetnamestr;
-	spreadsheet.context = new SocialCalc.RenderContext(spreadsheet.sheet);
+	SocialCalc.Formula.SheetCache.sheets[sheetname] = {
+		sheet: newsheet,
+		name: sheetname
+	}
+	newsheet.sheetname = sheetname;
 
-	spreadsheet.sheet.statuscallback = SocialCalc.EditorSheetStatusCallback;
-    spreadsheet.sheet.statuscallbackparams = spreadsheet.editor;
-				
-    workbook.sheetArr[sheetnamestr] = {};
-	workbook.sheetArr[sheetnamestr].sheet = spreadsheet.sheet;
-	workbook.sheetArr[sheetnamestr].context = spreadsheet.context;
+	newsheet.ParseSheetSave(savestr);
 	
-	workbook.sheetArr[sheetnamestr].editorprop = {};
-	workbook.sheetArr[sheetnamestr].editorprop.ecell = null;
-	workbook.sheetArr[sheetnamestr].editorprop.range = null;
-	workbook.sheetArr[sheetnamestr].editorprop.range2 = null;
+	workbook.sheetArr[sheetid] = {};
+	workbook.sheetArr[sheetid].sheet = newsheet;
+	workbook.sheetArr[sheetid].context = null;
+	
+	workbook.sheetArr[sheetid].editorprop = {};
+	workbook.sheetArr[sheetid].editorprop.ecell = {
+			coord: "A1",
+			row: 1,
+			col: 1
+		};
+	workbook.sheetArr[sheetid].editorprop.range = null;
+	workbook.sheetArr[sheetid].editorprop.range2 = null;
+	
+}
 
-	if (oldsheetnamestr != null) {
-		workbook.sheetArr[oldsheetnamestr].editorprop.ecell = spreadsheet.editor.ecell;
-		workbook.sheetArr[oldsheetnamestr].editorprop.range = spreadsheet.editor.range;
-		workbook.sheetArr[oldsheetnamestr].editorprop.range2 = spreadsheet.editor.range2;
+SocialCalc.AddNewWorkBookSheet = function AddNewWorkBookSheet(workbook, sheetid, oldsheetid, fromclip, spread){
+
+	var spreadsheet = workbook.spreadsheet;
+	
+	//alert("create new sheet "+sheetid+" old="+oldsheetid+" def="+workbook.defaultsheetname);
+	
+	if (spread == null) {
+		spreadsheet.sheet = new SocialCalc.Sheet();
+		SocialCalc.Formula.SheetCache.sheets[sheetid] = {
+			sheet: spreadsheet.sheet,
+			name: sheetid
+		}
+		spreadsheet.sheet.sheetname = sheetid;
+	}
+	else {
+		//alert("existing spread")
+		spreadsheet.sheet = spread
 	}
 
-				
+	spreadsheet.context = new SocialCalc.RenderContext(spreadsheet.sheet);
+	
+	spreadsheet.sheet.statuscallback = SocialCalc.EditorSheetStatusCallback;
+	spreadsheet.sheet.statuscallbackparams = spreadsheet.editor;
+	
+	workbook.sheetArr[sheetid] = {};
+	workbook.sheetArr[sheetid].sheet = spreadsheet.sheet;
+	workbook.sheetArr[sheetid].context = spreadsheet.context;
+	
+	workbook.sheetArr[sheetid].editorprop = {};
+	workbook.sheetArr[sheetid].editorprop.ecell = null;
+	workbook.sheetArr[sheetid].editorprop.range = null;
+	workbook.sheetArr[sheetid].editorprop.range2 = null;
+	
+	if (oldsheetid != null) {
+		workbook.sheetArr[oldsheetid].editorprop.ecell = spreadsheet.editor.ecell;
+		workbook.sheetArr[oldsheetid].editorprop.range = spreadsheet.editor.range;
+		workbook.sheetArr[oldsheetid].editorprop.range2 = spreadsheet.editor.range2;
+	}
+	
+	
 	spreadsheet.context.showGrid = true;
-   	spreadsheet.context.showRCHeaders = true;
+	spreadsheet.context.showRCHeaders = true;
 	spreadsheet.editor.context = spreadsheet.context;
-
+	
 	if (!fromclip) {
 		spreadsheet.editor.ecell = {
 			coord: "A1",
@@ -127,17 +168,18 @@ SocialCalc.AddNewWorkBookSheet = function AddNewWorkBookSheet(workbook, sheetnam
 			//alert("sheetdata = "+workbook.clipsheet.savestr);
 			spreadsheet.sheet.ParseSheetSave(workbook.clipsheet.savestr);
 		}
-				
+		
 		spreadsheet.editor.ecell = workbook.clipsheet.editorprop.ecell;
 		spreadsheet.context.highlights[spreadsheet.editor.ecell.coord] = "cursor";
-	
+		
 		// range is not pasted ??!??
 	
 	}
-	
+
 	spreadsheet.editor.FitToEditTable();
-	spreadsheet.editor.ScheduleRender();	
+	spreadsheet.editor.ScheduleRender();
 	//spreadsheet.ExecuteCommand('recalc', '');
+	
 }
 
 SocialCalc.ActivateWorkBookSheet = function ActivateWorkBookSheet(workbook, sheetnamestr, oldsheetnamestr) {
@@ -148,6 +190,13 @@ SocialCalc.ActivateWorkBookSheet = function ActivateWorkBookSheet(workbook, shee
 	
 	spreadsheet.sheet = workbook.sheetArr[sheetnamestr].sheet;
 	spreadsheet.context = workbook.sheetArr[sheetnamestr].context;
+
+	if (spreadsheet.context == null) {
+		//alert("context null")
+		//for (var sheet in workbook.sheetArr) alert(sheet+spreadsheet.sheet )
+		workbook.AddNewWorkBookSheet(sheetnamestr, oldsheetnamestr, false, spreadsheet.sheet)
+		return
+	}
 
 	spreadsheet.editor.context = spreadsheet.context;
 
@@ -165,11 +214,17 @@ SocialCalc.ActivateWorkBookSheet = function ActivateWorkBookSheet(workbook, shee
 		workbook.sheetArr[oldsheetnamestr].editorprop.range2 = spreadsheet.editor.range2;
 	}
 	spreadsheet.editor.range2 = workbook.sheetArr[sheetnamestr].editorprop.range2;
+
+	spreadsheet.sheet.statuscallback = SocialCalc.EditorSheetStatusCallback;
+    spreadsheet.sheet.statuscallbackparams = spreadsheet.editor;
 			   	
 	// reset highlights ??
-					   
+	
+	//spreadsheet.editor.FitToEditTable();				   
 	//spreadsheet.editor.ScheduleRender();
+	
 	spreadsheet.ExecuteCommand('recalc', '');
+	
 }   
 
 SocialCalc.DeleteWorkBookSheet = function DeleteWorkBookSheet(workbook, oldname, curname) {
@@ -191,10 +246,14 @@ SocialCalc.SaveWorkBookSheet = function CreateSaveWorkBook(workbook, sheetid) {
 	return sheetstr;
 } 
 
-SocialCalc.LoadWorkBookSheet = function LoadWorkBookSheet(workbook, sheetid, savestr) {
+SocialCalc.LoadRenameWorkBookSheet = function LoadRenameWorkBookSheet(workbook, sheetid, savestr, newname) {
 	
 	workbook.sheetArr[sheetid].sheet.ResetSheet();
 	workbook.sheetArr[sheetid].sheet.ParseSheetSave(savestr);
+	
+	delete SocialCalc.Formula.SheetCache.sheets[workbook.sheetArr[sheetid].sheet.sheetname];
+	workbook.sheetArr[sheetid].sheet.sheetname = newname;
+	SocialCalc.Formula.SheetCache.sheets[newname] = {sheet: workbook.sheetArr[sheetid].sheet, name: newname};
 }
 
 SocialCalc.RenderWorkBookSheet = function RenderWorkBookSheet(workbook) {
@@ -235,13 +294,14 @@ SocialCalc.RenameWorkBookSheetCell = function(formula, oldname, newname) {
 	return updatedformula;
 }
 
-SocialCalc.RenameWorkBookSheet = function RenameWorkBookSheet(workbook, oldname, newname) {
+SocialCalc.RenameWorkBookSheet = function RenameWorkBookSheet(workbook, oldname, newname, sheetid) {
 
 	// for each sheet, fix up all the formula references
 	//
 	var oldsheet = SocialCalc.Formula.SheetCache.sheets[oldname].sheet;
 	delete SocialCalc.Formula.SheetCache.sheets[oldname];
 	SocialCalc.Formula.SheetCache.sheets[newname] = {sheet: oldsheet, name: newname};
+	workbook.sheetArr[sheetid].sheet.sheetname = newname
 	//
 	// fix up formulas for sheet rename
 	// if formulas should not be fixed up upon sheet rename, then comment out the following
@@ -277,7 +337,7 @@ SocialCalc.CopyWorkBookSheet = function CopyWorkBookSheet(workbook, sheetid) {
 	//workbook.clipsheet.editorprop.range2 = workbook.spreadsheet.editor.range2;
 	//workbook.clipsheet.highlights = workbook.spreadsheet.context.highlights;
 	
-	alert("copied "+sheetid);
+	//alert("copied "+sheetid);
 }
 
 SocialCalc.PasteWorkBookSheet = function PasteWorkBookSheet(workbook, newsheetid, oldsheetid) {

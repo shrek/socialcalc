@@ -106,28 +106,57 @@ SocialCalc.WorkBookControlDelSheet = function() {
 	}
 }
 
-SocialCalc.WorkBookControlAddSheet = function(addworksheet){
-
+SocialCalc.WorkBookControlAddSheetButton = function(sheetname, sheetid) {
+	
 	var control = SocialCalc.GetCurrentWorkBookControl();
 	
 	//Create an input type dynamically.
 	var element = document.createElement("input");
 
+	var name = null;
 
-	var name = "sheet"+ (control.sheetCnt+1).toString();
+	if (sheetid != null) {
+		name = sheetid
+	} else {
+		name = "sheet"+ (control.sheetCnt+1).toString();
+		control.sheetCnt = control.sheetCnt + 1;	
+	}
 
 	//Assign different attributes to the element.
 	element.setAttribute("type", "button");
-	element.setAttribute("value", name);
+	if (sheetname == null) {
+		element.setAttribute("value", name);
+	} else {
+		element.setAttribute("value", sheetname);
+	}
 	element.setAttribute("id", name);
-    element.setAttribute("name", (control.sheetCnt+1).toString());
+    element.setAttribute("name", name);
 	
 	var fnname = "SocialCalc.WorkBookControlActivateSheet("+"'"+name+"'"+")";
 	
 	element.setAttribute("onclick",fnname);
 	
 	control.sheetButtonArr[name] = element;
-	control.sheetCnt = control.sheetCnt + 1;
+	
+	
+	var foo = document.getElementById("fooBar");
+
+	//Append the element in page (in span).
+	foo.appendChild(element);
+
+	control.numSheets = control.numSheets + 1;
+	
+	return element;
+}
+
+SocialCalc.WorkBookControlAddSheet = function(addworksheet, sheetname){
+
+	var control = SocialCalc.GetCurrentWorkBookControl();
+	
+	// first add the button
+	var element = SocialCalc.WorkBookControlAddSheetButton(sheetname);
+	
+	// then change the highlight
 	
 	var old="sheet1";
 	if (control.currentSheetButton != null) {
@@ -137,19 +166,13 @@ SocialCalc.WorkBookControlAddSheet = function(addworksheet){
 	
 	element.setAttribute("style","background-color:lightgreen");
 	control.currentSheetButton = element;
+	var newsheetid = element.id;
+
 	
-	var foo = document.getElementById("fooBar");
-
-	//Append the element in page (in span).
-	foo.appendChild(element);
-
 	// create the sheet
-
 	if (addworksheet) {
-		control.workbook.AddNewWorkBookSheet(name, old, false);
-	}	
-	
-	control.numSheets = control.numSheets + 1;
+		control.workbook.AddNewWorkBookSheet(newsheetid, old, false);
+	}
 	
 }
 	
@@ -177,13 +200,16 @@ SocialCalc.WorkBookControlSaveSheet = function(){
 	
 	var sheetsave = {};
 
+	sheetsave.numsheets = control.numSheets;
 	sheetsave.currentid = control.currentSheetButton.id;
 	sheetsave.currentname = control.currentSheetButton.value;
 
 	sheetsave.sheetArr = {}
 	for (var sheet in control.sheetButtonArr) {
 		var sheetstr = control.workbook.SaveWorkBookSheet(sheet);
-		sheetsave.sheetArr[sheet] = sheetstr;
+		sheetsave.sheetArr[sheet] = {}
+		sheetsave.sheetArr[sheet].sheetstr = sheetstr;
+		sheetsave.sheetArr[sheet].name = control.sheetButtonArr[sheet].value;
 	}
 	
 	SocialCalc.TestWorkBookSaveStr = JSON.stringify(sheetsave);
@@ -194,13 +220,50 @@ SocialCalc.WorkBookControlLoad = function(){
 
 
 	var sheetsave = JSON.parse(SocialCalc.TestWorkBookSaveStr);
-	alert(sheetsave.currentid+","+sheetsave.currentname)
+	//alert(sheetsave.currentid+","+sheetsave.currentname)
 	
+	// first create a new workbook
+	var control = SocialCalc.GetCurrentWorkBookControl();
+	
+	SocialCalc.WorkBookControlCreateNewBook();
+	
+	// at this point there is one sheet, and 1 button
+	// create the sequence of buttons, and sheets
+	
+	var newbuttons = 0
+	var sheetid = null;
+	var currentsheetid = sheetsave.currentid;
 	for (var sheet in sheetsave.sheetArr) {
-		alert(sheet+","+sheetsave.sheetArr[sheet].savestr)
+		if (newbuttons > sheetsave.numsheets) {
+			break;
+		}
+		//alert("button="+newbuttons)
+		if (newbuttons == 0) {
+			// set the first button's name correctly
+			sheetid = control.currentSheetButton.id;
+			control.currentSheetButton.value = sheetsave.sheetArr[sheet].name;
+			// set the sheet data for the first sheet which already exists
+			control.workbook.LoadRenameWorkBookSheet(sheetid, sheetsave.sheetArr[sheet].sheetstr.savestr, control.currentSheetButton.value)
+			// need to also set the formula cache
+			newbuttons = newbuttons + 1
+			continue;
+		}
+		sheetid = "sheet"+(control.sheetCnt+1).toString()
+		control.sheetCnt = control.sheetCnt+1
+		SocialCalc.WorkBookControlAddSheetButton(sheetsave.sheetArr[sheet].name, sheetid)
+		// create the sheet
+		control.workbook.AddNewWorkBookSheetNoSwitch(sheetid, sheetsave.sheetArr[sheet].name, sheetsave.sheetArr[sheet].sheetstr.savestr)
+	
+		newbuttons = newbuttons + 1
+		
+		if (sheet == sheetsave.currentid) {
+			currentsheetid = sheet
+		}
+		
 	}
-	
-	
+	control.workbook.spreadsheet.DoOnResize()
+	// activate the current sheet
+	SocialCalc.WorkBookControlActivateSheet(currentsheetid);
 }
 
 
@@ -301,7 +364,7 @@ SocialCalc.WorkBookControlRenameSheetSubmit = function(){
    
    // perform a rename for formula references to this sheet in all the 
    // sheets in the workbook
-   control.workbook.RenameWorkBookSheet(oldname, ele.value);
+   control.workbook.RenameWorkBookSheet(oldname, ele.value, control.currentSheetButton.id);
 }
 
 SocialCalc.WorkBookControlCreateNewBook = function() {
@@ -316,7 +379,7 @@ SocialCalc.WorkBookControlCreateNewBook = function() {
 	}
 	// Reset that 1 sheet
 	
-	control.workbook.LoadWorkBookSheet(control.currentSheetButton.id, "")
+	control.workbook.LoadRenameWorkBookSheet(control.currentSheetButton.id, "", control.workbook.defaultsheetname)
 	
 	
 	// delete all the buttons except 1
@@ -332,7 +395,8 @@ SocialCalc.WorkBookControlCreateNewBook = function() {
 			control.numSheets = control.numSheets - 1;
 		}
 	}
-	control.currentSheetButton.value = workbook.defaultsheetname;	
+	// rename that button
+	control.currentSheetButton.value = control.workbook.defaultsheetname;	
 }
 
 SocialCalc.WorkBookControlNewBook = function() {
@@ -349,6 +413,7 @@ SocialCalc.WorkBookControlCopySheet = function(){
 	
 	control.workbook.CopyWorkBookSheet(control.currentSheetButton.id);
 	
+	alert("copied sheet:"+control.currentSheetButton.value);
 }
 
 SocialCalc.WorkBookControlPasteSheet = function() {
