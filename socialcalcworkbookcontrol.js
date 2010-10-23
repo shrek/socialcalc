@@ -178,6 +178,8 @@ SocialCalc.WorkBookControlAddSheet = function(addworksheet, sheetname){
 	
 SocialCalc.WorkBookControlActivateSheet = function(name) {
 
+	//alert("in activate sheet="+name)
+
 	var control = SocialCalc.GetCurrentWorkBookControl();
 	
 	var foo = document.getElementById(name);
@@ -191,6 +193,71 @@ SocialCalc.WorkBookControlActivateSheet = function(name) {
 	control.currentSheetButton = foo;
 
 	control.workbook.ActivateWorkBookSheet(name, old);
+	
+}
+
+SocialCalc.WorkBookControlHttpRequest = null;
+
+SocialCalc.WorkBookControlAlertContents = function(){
+
+	var loadedstr = "";
+	var http_request = SocialCalc.WorkBookControlHttpRequest;
+	
+	if (http_request.readyState == 4) {
+		//addmsg("received:" + http_request.responseText.length + " chars");
+		try {
+			if (http_request.status == 200) {
+				loadedstr = http_request.responseText || "";
+				http_request = null;
+			}
+			else {
+				;
+			}
+		} 
+		catch (e) {
+		}
+		// do something with loaded str
+		alert("loaded="+loadedstr);
+		SocialCalc.TestWorkBookSaveStr = loadedstr;
+	}
+}
+
+
+SocialCalc.WorkBookControlAjaxCall = function(url, contents) {
+
+	var http_request = null;
+	
+	alert("in ajax")
+	if (window.XMLHttpRequest) { // Mozilla, Safari,...
+		http_request = new XMLHttpRequest();
+	}
+	else 
+		if (window.ActiveXObject) { // IE
+			try {
+				http_request = new ActiveXObject("Msxml2.XMLHTTP");
+			} 
+			catch (e) {
+				try {
+					http_request = new ActiveXObject("Microsoft.XMLHTTP");
+				} 
+				catch (e) {
+				}
+			}
+		}
+	if (!http_request) {
+		alert('Giving up :( Cannot create an XMLHTTP instance');
+		return false;
+	}
+	
+	// Make the actual request
+	SocialCalc.WorkBookControlHttpRequest = http_request;
+	
+	http_request.onreadystatechange = SocialCalc.WorkBookControlAlertContents;
+	http_request.open('POST', document.URL, true); // async
+	http_request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+	http_request.send(contents);
+	
+	return true;
 	
 }
 
@@ -214,6 +281,8 @@ SocialCalc.WorkBookControlSaveSheet = function(){
 	
 	SocialCalc.TestWorkBookSaveStr = JSON.stringify(sheetsave);
 	alert(SocialCalc.TestWorkBookSaveStr);
+	// send it to the backend
+	// SocialCalc.WorkBookControlAjaxCall("/", "&sheetdata="+encodeURIComponent(SocialCalc.TestWorkBookSaveStr));
 }
 
 SocialCalc.WorkBookControlLoad = function(){
@@ -246,6 +315,7 @@ SocialCalc.WorkBookControlLoad = function(){
 			control.workbook.LoadRenameWorkBookSheet(sheetid, sheetsave.sheetArr[sheet].sheetstr.savestr, control.currentSheetButton.value)
 			// need to also set the formula cache
 			newbuttons = newbuttons + 1
+			currentsheetid = sheetid
 			continue;
 		}
 		sheetid = "sheet"+(control.sheetCnt+1).toString()
@@ -257,13 +327,13 @@ SocialCalc.WorkBookControlLoad = function(){
 		newbuttons = newbuttons + 1
 		
 		if (sheet == sheetsave.currentid) {
-			currentsheetid = sheet
+			currentsheetid = sheetid
 		}
 		
 	}
-	control.workbook.spreadsheet.DoOnResize()
+	//control.workbook.spreadsheet.DoOnResize()
 	// activate the current sheet
-	SocialCalc.WorkBookControlActivateSheet(currentsheetid);
+	window.setTimeout(SocialCalc.WorkBookControlActivateSheet(currentsheetid), 200);
 }
 
 
