@@ -11,7 +11,7 @@ Templating  -- Freemarker
 Language    -- Scala/Java
 
 datastore   -- choice of:
-                     DB based (using Squeryl)
+                     MySql or other DB (using Squeryl)
                      Cassandra
                      Direct File Io
 
