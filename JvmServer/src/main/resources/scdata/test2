@@ -1,0 +1,44 @@
+socialcalc:version:1.0
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary=SocialCalcSpreadsheetControlSave
+--SocialCalcSpreadsheetControlSave
+Content-type: text/plain; charset=UTF-8
+
+# SocialCalc Spreadsheet Control Save
+version:1.0
+part:sheet
+part:edit
+part:audit
+--SocialCalcSpreadsheetControlSave
+Content-type: text/plain; charset=UTF-8
+
+version:1.5
+cell:A1:v:1
+cell:A2:v:2
+cell:A3:v:3
+cell:A4:v:4
+cell:A5:v:5
+cell:A6:v:6
+cell:A7:v:6
+cell:A8:v:7
+sheet:c:1:r:8
+--SocialCalcSpreadsheetControlSave
+Content-type: text/plain; charset=UTF-8
+
+version:1.0
+rowpane:0:1:38
+colpane:0:1:17
+ecell:A9
+sort::-1:up::::
+--SocialCalcSpreadsheetControlSave
+Content-type: text/plain; charset=UTF-8
+
+set A1 value n 1
+set A2 value n 2
+set A3 value n 3
+set A4 value n 4
+set A5 value n 5
+set A6 value n 6
+set A7 value n 6
+set A8 value n 7
+--SocialCalcSpreadsheetControlSave--

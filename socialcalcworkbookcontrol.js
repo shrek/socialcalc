@@ -219,6 +219,7 @@ SocialCalc.WorkBookControlAlertContents = function(){
 		// do something with loaded str
 		alert("loaded="+loadedstr);
 		SocialCalc.TestWorkBookSaveStr = loadedstr;
+		SocialCalc.Clipboard.clipboard = loadedstr;
 	}
 }
 

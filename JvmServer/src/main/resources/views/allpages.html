@@ -1,0 +1,72 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+ "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>${titlestr}</title>
+<style>
+body, td, input, texarea
+ {font-family:verdana,helvetica,sans-serif;font-size:small;}
+ .smaller {font-size:smaller;}
+</style>
+<script>
+function doedit(p) {
+   document.getElementById("pagename").value = p;
+   document.getElementById("edit").value = "yes";
+   }
+
+function doview(p) {
+   document.getElementById("pagename").value = p;
+   document.getElementById("view").value = "yes";
+   }
+function doremove(p) {
+   document.getElementById("pagename").value = p;
+   document.getElementById("delete").value = "yes";
+   }
+
+</script>
+</head>
+<body>
+<form action="/sheet" method="POST">
+<div style="padding:6px;background-color:#C8C8C8;">
+<div style="font-weight:bold;">SocialCalc Demo</div>
+<div style="font-weight:bold;">User: ${username} &nbsp;</div>
+<br>
+<br>
+<div style="padding:6px;background-color:#E8E8E8;">
+<div style="font-weight:bold;font-size:smaller;">Your Spreadsheets:</div>
+<div>   
+<table> 
+<#list dir as file>
+<tr>
+<td>
+<span style="font-size:smaller;">${file}</span> 
+</td>
+<td>
+<input class="smaller" type="submit" value="Edit" onclick="doedit('${file}');">
+</td>
+<td>
+<input class="smaller" type="submit" value="View" onclick="doview('${file}');"> 
+</td>
+<td>
+<input class="smaller" type="submit" value="Delete" onclick="doremove('${file}');"> 
+</td>
+</tr>
+</#list>
+</table>
+<input id="pagename" name="pagename" type="hidden" value="">
+<input id="edit" name="edit" type="hidden" value="">
+<input id="view" name="view" type="hidden" value="">
+<input id="delete" name="delete" type="hidden" value="">
+</div>
+<br>
+</form>
+<form action="/sheet" method="POST">
+<input type="text" name="newpagename" value="">
+<input type="submit" name="newpage" value="Create New Spreadsheet">
+<input type="hidden" name="edit" value="yes">
+</form>
+</div>
+<br>
+</body>
+</html>

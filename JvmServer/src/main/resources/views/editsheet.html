@@ -1,0 +1,79 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>${titlestr} - ${fname}</title>
+<script type="text/javascript" src="socialcalcconstants.js"></script>
+<script type="text/javascript" src="socialcalc-3.js"></script>
+<script type="text/javascript" src="socialcalctableeditor.js"></script>
+<script type="text/javascript" src="formatnumber2.js"></script>
+<script type="text/javascript" src="formula1.js"></script>
+<script type="text/javascript" src="socialcalcpopup.js"></script>
+<script type="text/javascript" src="socialcalcspreadsheetcontrol.js"></script>
+<style>
+body, td, input, texarea
+ {font-family:verdana,helvetica,sans-serif;font-size:small;}
+ .smaller {font-size:smaller;}
+</style>
+</head>
+
+<body>
+<form name="f0" action="/sheet" method="POST">
+<div style="padding:6px;background-color:#E8E8E8;">
+<div style="font-weight:bold;">SPREADSHEETS</div>
+<br>
+<div>User:<span style="font-weight:bold;">${username} &nbsp;</span></div>
+<div style="margin-bottom:6px;">Editing page: <span style="font-style:italic;font-weight:bold;">
+${fname}
+</span></div>
+<input class="smaller" type="submit" name="savespreadsheet" value="Save" onclick="dosave();">
+<input class="smaller" type="submit" name="cancelspreadsheet" value="Cancel">
+<textarea name="savestr" id="sheetdata" style="display:none;">
+${sheetstr}
+</textarea>
+<input type="hidden" name="newstr" id="newdata" value="">
+<input type="hidden" name="pagename" value='${fname}'>
+</div>
+</form>
+<div id="tableeditor" style="margin:8px 0px 10px 0px;">editor goes here</div>
+<script>
+
+function dosave() {
+   var sheetstr = spreadsheet.CreateSpreadsheetSave();
+   document.getElementById("newdata").value = sheetstr;
+   }
+
+// start everything
+
+   SocialCalc.Constants.defaultImagePrefix = "/images/sc-";
+   SocialCalc.Popup.imagePrefix = "/images/sc-";
+
+   var spreadsheet = new SocialCalc.SpreadsheetControl();
+   spreadsheet.InitializeSpreadsheetControl("tableeditor", 0, 0, 0);
+
+   var savestr = document.getElementById("sheetdata").value;
+   var parts = spreadsheet.DecodeSpreadsheetSave(savestr);
+   if (parts) {
+      if (parts.sheet) {
+         spreadsheet.sheet.ResetSheet();
+         spreadsheet.ParseSheetSave(savestr.substring(parts.sheet.start, parts.sheet.end));
+         }
+      if (parts.edit) {
+         spreadsheet.editor.LoadEditorSettings(savestr.substring(parts.edit.start, parts.edit.end));
+         }
+      if (parts.startupmacro) {
+         spreadsheet.editor.EditorScheduleSheetCommands(savestr.substring(parts.startupmacro.start, parts.startupmacro.end), false, true);
+         }
+      }
+   if (spreadsheet.sheet.attribs.recalc=="off") {
+      spreadsheet.sheet.attribs.needsrecalc = "yes"; // default turn it on
+      spreadsheet.ExecuteCommand('redisplay', '');
+      }
+   else {
+      spreadsheet.ExecuteCommand('recalc', '');
+      }
+
+
+</script>
+</body>
+</html>

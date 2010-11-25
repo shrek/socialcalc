@@ -1,0 +1,57 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>${titlestr} - ${fname}</title>
+<script type="text/javascript" src="socialcalcconstants.js"></script>
+<script type="text/javascript" src="socialcalc-3.js"></script>
+<script type="text/javascript" src="socialcalctableeditor.js"></script>
+<script type="text/javascript" src="formatnumber2.js"></script>
+<script type="text/javascript" src="formula1.js"></script>
+<script type="text/javascript" src="socialcalcpopup.js"></script>
+<script type="text/javascript" src="socialcalcspreadsheetcontrol.js"></script>
+<style>
+body, td, input, texarea
+ {font-family:verdana,helvetica,sans-serif;font-size:small;}
+ .smaller {font-size:smaller;}
+</style>
+</head>
+<body>
+
+<#if print == "no">
+<div style="padding:6px;background-color:#E8E8E8;">
+<div style="font-weight:bold;color:white;">SPREADSHEETS</div>
+<div style="font-weight:bold;">User: ${username} &nbsp;<br></div>
+<div style="margin-bottom:6px;">Editing page: <span style="font-style:italic;font-weight:bold;">${fname}</span></div>
+<form name="f0" action="/sheet" method="POST">
+<input class="smaller" type="submit" name="doneview" value="Done">
+</form>
+<a href="?pagename=${fname}&view=yes&print=yes" target="_blank">Printer-friendly</a>
+</div>
+</#if>
+
+
+<textarea name="savestr" id="sheetdata" style="display:none;">${sheetstr}</textarea>
+<div id="main">Sheet goes here</div>
+<script>
+
+   var spreadsheet = new SocialCalc.SpreadsheetControl();
+
+   SocialCalc.Constants.defaultImagePrefix = "/images/sc-";
+   SocialCalc.Popup.imagePrefix = "/images/sc-";
+
+   var savestr = document.getElementById("sheetdata").value;
+   var parts = spreadsheet.DecodeSpreadsheetSave(savestr);
+   if (parts) {
+      if (parts.sheet) {
+         spreadsheet.sheet.ResetSheet();
+         spreadsheet.ParseSheetSave(savestr.substring(parts.sheet.start, parts.sheet.end));
+         }
+      }
+
+   var html = spreadsheet.CreateSheetHTML();
+   document.getElementById("main").innerHTML = html;
+
+</script>
+</body>
+</html>
