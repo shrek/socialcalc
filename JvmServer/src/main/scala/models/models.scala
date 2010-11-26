@@ -108,7 +108,9 @@ object DirectFileIo extends UserFileIO {
   }
 
   def deleteFile(user: String, fname:String) : Unit = {
-    ()
+    val f = new File(saveDir+fname)
+    val success = f.delete()
+    Log.info("file delete is: "+fname+":"+success)
   }
 
   def writeToFile(user:String, fname:String, data:String) : Unit = {

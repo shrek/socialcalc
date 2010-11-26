@@ -17,10 +17,11 @@ body, td, input, texarea
 </style>
 </head>
 <body>
+
 <#if print == "no">
-<div style="padding:6px;background-color:#80A9F3;">
+<div style="padding:6px;background-color:#E8E8E8;">
 <div style="font-weight:bold;color:white;">SPREADSHEETS</div>
-<div style="color:#FDD;font-weight:bold;">User: ${username} &nbsp;</div>
+<div style="font-weight:bold;">User: ${username} &nbsp;<br></div>
 <div style="margin-bottom:6px;">Editing page: <span style="font-style:italic;font-weight:bold;">${fname}</span></div>
 <form name="f0" action="/sheet" method="POST">
 <input class="smaller" type="submit" name="doneview" value="Done">
@@ -28,11 +29,11 @@ body, td, input, texarea
 <a href="?pagename=${fname}&view=yes&print=yes" target="_blank">Printer-friendly</a>
 </div>
 </#if>
+
+
 <textarea name="savestr" id="sheetdata" style="display:none;">${sheetstr}</textarea>
 <div id="main">Sheet goes here</div>
 <script>
-
-// start everything
 
    var spreadsheet = new SocialCalc.SpreadsheetControl();
 
